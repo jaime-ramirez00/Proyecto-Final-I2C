@@ -21,7 +21,7 @@ architecture arch of I2C_Slave is
 	-- State.
     type state is (IDDLE, SLAVE_ADD, ACK1, INT_ADD, ACK2, DATA_RW, ACK3, STP);
 	signal current_state   : state := IDDLE;
-	
+
 	-- Signals.
 	signal count 		   : integer range 0 to 8 := 0;
 	signal address_compare : std_logic_vector(6 downto 0);
@@ -49,8 +49,8 @@ begin
 					R_W <= SDA;
 					current_state <= ACK1;
 				end if;
-			end if;  
-		-- First Acknowledge.	          
+			end if;
+		-- First Acknowledge.
 		when ACK1 =>
 			if address_compare = slave_address then
 				SDA <= '0';
@@ -73,7 +73,7 @@ begin
 						current_state <= ACK2;
 					end if;
 				end if;
-			end if; 
+			end if;
 		-- Second Acknowledge.
 		when ACK2 =>
 			SDA <= '0';
@@ -83,7 +83,7 @@ begin
 			if SCL'event and SCL = '1' then
 				if count = 0 then
 					count <= count + 1;
-					index := 0;
+					index := 7;
 				else
 					count <= count + 1;
 					if R_W = '0' then
@@ -93,9 +93,9 @@ begin
 					else
 						-- Read.
 						SDA <= RAM(TO_INTEGER(UNSIGNED(RAM_index)))(index);
-						index := index + 1;
+						index := index - 1;
 					end if;
-					
+
 					if count = 8 then
 						count <= 0;
 						current_state <= Ack3;
@@ -117,5 +117,5 @@ begin
 			current_state <= IDDLE;
         end case;
     end process;
-	
+
 end arch;
