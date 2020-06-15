@@ -1,0 +1,7 @@
+v 4
+file . "I2C_Slave.vhdl" "27b864511365ad2dfc5f5e1e65fec906b9baf230" "20200615011713.702":
+  entity i2c_slave at 2( 16) + 0 on 13;
+  architecture arch of i2c_slave at 13( 240) + 0 on 14;
+file . "I2C_Master.vhdl" "9ebbbed24130be21ef607c85f9d51aa4455c3b2b" "20200615011645.470":
+  entity i2c_master at 2( 17) + 0 on 11;
+  architecture arch of i2c_master at 14( 291) + 0 on 12;
