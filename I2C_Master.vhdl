@@ -62,7 +62,7 @@ begin
                         SDA <= Data_in;
                         if count = 7 then
                         	count <= 0;
-                            current_state <= ACK1;
+                            current_state <= ACK2;
                         end if;
                     end if;
                 -- Second Acknowledge.
