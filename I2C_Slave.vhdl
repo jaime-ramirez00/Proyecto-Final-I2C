@@ -106,9 +106,6 @@ begin
 		when ACK3 =>
 				SDA <= '0';
 				current_state <= STP;
-			else
-				current_state <= DATA_RW;
-			end if;
 		-- Stop.
 		when STP =>
 			if R_W = '0' then
