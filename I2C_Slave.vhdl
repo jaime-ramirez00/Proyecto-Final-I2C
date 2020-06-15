@@ -104,7 +104,7 @@ begin
 			end if;
 		-- Third Acknowledge.
 		when ACK3 =>
-			if SDA = '0' then
+				SDA <= '0';
 				current_state <= STP;
 			else
 				current_state <= DATA_RW;
