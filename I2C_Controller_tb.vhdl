@@ -1,9 +1,9 @@
 -- Test Bench
 library IEEE;
---library std;
+library std;
 use IEEE.std_logic_1164.all;
---use std.textio.all;
---use IEEE.std_logic_textio.all;
+use std.textio.all;
+use IEEE.std_logic_textio.all;
 
 entity I2C_Controller_tb is
 end entity;
@@ -56,6 +56,11 @@ begin
     end process;
 
     process
+        -- Variables for file reading.
+        file fin : TEXT open READ_MODE is "input.txt";
+        variable curr_line : line;
+        variable vDATA1, vDATA2, vDATA3 : std_logic_vector(7 downto 0);
+
     	procedure send_data( sd : std_logic_vector(0 to 7) ) is
         begin
             for i in 0 to 7 loop
@@ -72,8 +77,14 @@ begin
 
         Data_in <= '1';
         Reset <= '1';
-        data_package <= "00000010";
         
+        readline(fin, curr_line);
+        read(curr_line, vDATA1);
+		read(curr_line, vDATA2);
+		read(curr_line, vDATA3);
+
+        data_package <= vDATA1;
+
         wait for clk_period;
 
         data_in <= '0';        
@@ -81,13 +92,13 @@ begin
         Master_EN <= '1';
         Slave_EN <= '0';
         send_data(data_package);
-        data_package <= "00011011";
+        data_package <= vDATA2;
         ----------------------------
         wait for clk_period;
         Master_EN <= '1';
         Slave_EN <= '0';
         send_data(data_package);
-        data_package <= "01011001";
+        data_package <= vDATA3;
 
         ----------------------------
         wait for clk_period;
@@ -103,20 +114,26 @@ begin
 
         Data_in <= '1';
         Reset <= '1';
-        data_package <= "00000011";
+
+        readline(fin, curr_line);
+        read(curr_line, vDATA1);
+		read(curr_line, vDATA2);
+        read(curr_line, vDATA3);
+        
+        data_package <= vDATA1;
         
         wait for clk_period;
 
         data_in <= '0';        
         Reset <= '0';
         send_data(data_package);
-        data_package <= "00011011";
+        data_package <= vDATA2;
         ----------------------------
         wait for clk_period;
         Master_EN <= '1';
         Slave_EN <= '0';
         send_data(data_package);
-        --data_package <= "01011001";
+        data_package <= vDATA3;
 
         ----------------------------
         wait for clk_period;
