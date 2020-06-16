@@ -4,47 +4,52 @@ use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
 
 entity I2C_Slave is
-	port(SCL : in std_logic;
-		 SDA : inout std_logic;
+	port(ENABLE : in std_logic;
+		 SCL 	: in std_logic;
+		 SDA 	: inout std_logic := 'Z';
 		 written_data : out std_logic_vector(7 downto 0)
     );
 end entity;
 
 architecture arch of I2C_Slave is
 	-- Slave Address.
-	constant slave_address: std_logic_vector(6 downto 0):="0000000";
+	constant slave_address: std_logic_vector(6 downto 0):="0000001";
 
 	-- Slave internal memory.
     type RAM_type is array (0 to 255) of std_logic_vector(7 downto 0);
-	signal RAM : RAM_type;
+	signal RAM : RAM_type := (others => "00000000");
 
 	-- State.
     type state is (IDDLE, SLAVE_ADD, ACK1, INT_ADD, ACK2, DATA_RW, ACK3, STP);
 	signal current_state   : state := IDDLE;
 
 	-- Signals.
-	signal count 		   : integer range 0 to 8 := 0;
+	signal count 		   : integer range 0 to 9 := 0;
 	signal address_compare : std_logic_vector(6 downto 0);
 	signal R_W			   : std_logic;
 	signal RAM_index 	   : std_logic_vector(7 downto 0);
+	signal SDA_signal	   : std_logic;
 begin
 
-process(SCL, SDA)
-	variable index : integer := 0;
-begin
-	case current_state is
+	SDA <= SDA_signal when ENABLE = '1' else 'Z';
+
+	process(SCL, SDA)
+		variable index : integer := 0;
+	begin
+		case current_state is
 		-- IDDLE.
 		when IDDLE =>
-			if SCL = '1' and SDA = '0' and SDA'event then
+			if SCL = '1' and SDA = '0' then
 				current_state <= SLAVE_ADD;
 			end if;
 		-- Slave Address.
 		when SLAVE_ADD =>
 			if SCL'event and SCL = '1' then
-				count <= count + 1;
-				address_compare(6 downto 1) <= address_compare(5 downto 0);
-				address_compare(0) <= SDA;
-				if count = 7 then
+				if count < 7 then
+					count <= count + 1;
+					address_compare(6 downto 1) <= address_compare(5 downto 0);
+					address_compare(0) <= SDA;
+				else
 					count <= 0;
 					R_W <= SDA;
 					current_state <= ACK1;
@@ -52,12 +57,14 @@ begin
 			end if;
 		-- First Acknowledge.
 		when ACK1 =>
-			if address_compare = slave_address then
-				SDA <= '0';
-				current_state <= INT_ADD;
-			else
-				SDA <= '1';
-				current_state <= SLAVE_ADD;
+			if SCL'event and SCL = '0' then
+				if address_compare = slave_address then
+					SDA_signal <= '0';
+					current_state <= INT_ADD;
+				else
+					SDA_signal <= '1';
+					current_state <= SLAVE_ADD;
+				end if;
 			end if;
 		-- Internal Address.
 		when INT_ADD =>
@@ -76,7 +83,7 @@ begin
 			end if;
 		-- Second Acknowledge.
 		when ACK2 =>
-			SDA <= '0';
+			SDA_signal <= '0';
 			current_state <= INT_ADD;
 		-- Data Read/Write.
 		when DATA_RW =>
@@ -92,7 +99,7 @@ begin
 						RAM(TO_INTEGER(UNSIGNED(RAM_index)))(0) <= SDA;
 					else
 						-- Read.
-						SDA <= RAM(TO_INTEGER(UNSIGNED(RAM_index)))(index);
+						SDA_signal <= RAM(TO_INTEGER(UNSIGNED(RAM_index)))(index);
 						index := index - 1;
 					end if;
 
@@ -104,7 +111,7 @@ begin
 			end if;
 		-- Third Acknowledge.
 		when ACK3 =>
-				SDA <= '0';
+				SDA_signal <= '0';
 				current_state <= STP;
 		-- Stop.
 		when STP =>
